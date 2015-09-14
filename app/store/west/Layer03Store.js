@@ -1,0 +1,97 @@
+Ext.define('KRF_DEV.store.west.Layer03Store', {
+	
+	extend: 'Ext.data.TreeStore',
+
+	autoLoad: true,
+
+	proxy: {
+		type: 'ajax',
+		url: 'resources/data/west/Layer01Data.json',
+		reader: {
+			type: 'json'
+		}
+	},
+	
+	constructor: function(params){
+		aaa(params);
+		this.callParent();
+	}
+});
+	
+	function aaa(params){
+		
+		console.log("@@@@@@@@");
+		console.info(params.params);
+		console.log("@@@@@@@@");
+		
+		var queryTask = new esri.tasks.QueryTask('http://fireftp.iptime.org:6080/arcgis/rest/services/reach/MapServer/f=pjson'); // 레이어 URL
+		var query = new esri.tasks.Query();
+		query.returnGeometry = false;
+		query.where = "1=1";
+		query.outFields = ["*"];
+		
+		//var jsonStr = "[";
+		//var jsonStr = "";
+		
+		queryTask.execute(query,  function(results){
+			
+			//console.info(results.layers[0]);
+			//return;
+			
+			/* 트리 바인딩 구조 텍스트 만들기 */
+			var jsonStr = "[";
+			
+			Ext.each(results.layers, function(objLayer, idx, objLayers){
+				
+				// 상위 node일때
+				if(objLayer.parentLayerId == -1){
+					jsonStr += "{\n";
+					jsonStr += "	\"id\": \"" + objLayer.id + "\",\n";
+					jsonStr += "	\"text\": \"" + objLayer.name + "\",\n";
+					jsonStr += "	\"checked\": false,\n";
+					
+					// children node가 있을때
+					if(objLayer.subLayerIds != null){
+						jsonStr += "	\"expanded\": true,\n"; // 펼치기..
+						jsonStr += "\n	\"children\": [";
+						for(i = 0; i < objLayer.subLayerIds.length; i++){
+							jsonStr += "{\n";
+							jsonStr += "		\"id\": \"" + objLayers[objLayer.subLayerIds[i]].id + "\",\n";
+							jsonStr += "		\"text\": \"" + objLayers[objLayer.subLayerIds[i]].name + "\",\n";
+							jsonStr += "		\"leaf\": true,\n";
+							jsonStr += "		\"checked\": false\n";
+							jsonStr += "	}, ";
+							if(i == objLayer.subLayerIds.length - 1){
+								jsonStr = jsonStr.substring(0, jsonStr.length - 2); // 마지막에 "," 빼기
+								jsonStr += "]\n}, ";
+							}
+						}
+					}
+					// children node가 없을때
+					else{
+						jsonStr += "	\"leaf\": true"; 
+						jsonStr += "\n}, "
+					}
+				}
+				
+			});
+			
+			jsonStr = jsonStr.substring(0, jsonStr.length - 2); // 마지막에 "," 빼기
+			jsonStr += "]";
+			console.info(JSON.parse(jsonStr));
+			store.setData(JSON.parse(jsonStr));
+			
+			//return jsonStr;
+			
+		});
+		
+		//console.info(jsonStr);
+		//this.setData(Ext.JSON.decode(jsonStr));
+		
+		dojo.connect(queryTask, "onError", function(err) {
+			alert(err);
+		});
+	
+	}
+	
+
