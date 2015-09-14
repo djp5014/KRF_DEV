@@ -27,7 +27,7 @@ Ext.define('KRF_DEV.view.east.SiteListWindow', {
 				text: 'root',
 				expanded: true,
 				children: [{
-					text: '수질측정지점(16)',
+					text: '수질측정지점(16)1',
 					cls: 'khLee-x-tree-node-text-bold',
 					"iconCls": "layerNoneImg",
 					checked: false,
